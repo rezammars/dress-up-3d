@@ -3,22 +3,23 @@ using UnityEngine;
 public class CharacterRotation : MonoBehaviour
 {
     public Transform characterRoot; // Objek karakter yang akan diputar
-    public Button rotateLeftButton, rotateRightButton; // Tombol untuk rotasi
-    public float rotationSpeed = 100f; // Kecepatan rotasi
+    public float rotationSpeed = 5f; // Kecepatan rotasi saat swipe
 
-    private void Start()
-    {
-        rotateLeftButton.onClick.AddListener(RotateLeft);
-        rotateRightButton.onClick.AddListener(RotateRight);
-    }
+    private Vector2 lastMousePosition; // Menyimpan posisi terakhir sentuhan/mouse
 
-    public void RotateLeft()
+    void Update()
     {
-       characterRoot.Rotate(0, -rotationSpeed * Time.deltaTime, 0);
-    }
+        if (Input.GetMouseButtonDown(0)) // Saat menyentuh layar pertama kali
+        {
+            lastMousePosition = Input.mousePosition;
+        }
+        else if (Input.GetMouseButton(0)) // Saat drag/swipe
+        {
+            Vector2 delta = (Vector2)Input.mousePosition - lastMousePosition; // Hitung perbedaan posisi
+            float rotationAmount = delta.x * rotationSpeed * Time.deltaTime; // Hitung rotasi berdasarkan pergerakan horizontal
 
-    public void RotateRight()
-    {
-       characterRoot.Rotate(0, rotationSpeed * Time.deltaTime, 0);
+            characterRoot.Rotate(0, -rotationAmount, 0); // Putar karakter
+            lastMousePosition = Input.mousePosition; // Update posisi terakhir
+        }
     }
 }
