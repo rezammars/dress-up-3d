@@ -5,15 +5,12 @@ using System.Collections.Generic;
 
 public class DressUpManager : MonoBehaviour
 {
-    [Header("UI Panel & Container")]
     public CanvasGroup panelKatalog;
     public Transform katalogContainer;
     public GameObject itemPrefab;
 
-    [Header("Karakter & Slot")]
     public Transform characterTransform;
 
-    [Header("Daftar Item")]
     public List<Sprite> rambutIcons;
     public List<GameObject> rambutModels;
     public List<Sprite> bajuIcons;
