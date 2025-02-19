@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 7f490a15bcf3ae34fb154b3fe837328a
+guid: c3496b4168afa6e489dc1cf5d6023955
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -97,23 +97,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Hair1
+      name: Shoes1
       rect:
         serializedVersion: 2
-        x: 42
-        y: 0
-        width: 370
-        height: 558
+        x: 15
+        y: 2
+        width: 420
+        height: 183
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 74231d1a6f8d7484faef6c042af6b5a2
-      internalID: -1757636532
+      spriteID: db3a651cc61fb3340a0c623fe89ed2e0
+      internalID: 1870082963
       vertices: []
       indices: 
       edges: []
@@ -122,7 +122,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 2b99e6861e61d034e80fbaaf54b82e70
+    spriteID: b821c096d2e11c3409c8d66de628c733
     internalID: 0
     vertices: []
     indices: 
@@ -132,7 +132,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Hair1: -1757636532
+      Shoes1: 1870082963
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

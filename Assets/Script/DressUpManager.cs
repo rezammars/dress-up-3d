@@ -5,12 +5,15 @@ using System.Collections.Generic;
 
 public class DressUpManager : MonoBehaviour
 {
-    [Header("UI Katalog")]
-    public CanvasGroup panelKatalog; // Panel katalog utama
-    public Transform katalogContainer; // Tempat item katalog ditampilkan
-    public GameObject itemPrefab; // Prefab untuk setiap item katalog
+    [Header("UI Panel & Container")]
+    public CanvasGroup panelKatalog;
+    public Transform katalogContainer;
+    public GameObject itemPrefab;
 
-    [Header("Daftar Item Kategori")]
+    [Header("Karakter & Slot")]
+    public Transform characterTransform;
+
+    [Header("Daftar Item")]
     public List<Sprite> rambutIcons;
     public List<GameObject> rambutModels;
     public List<Sprite> bajuIcons;
@@ -18,116 +21,102 @@ public class DressUpManager : MonoBehaviour
     public List<Sprite> sepatuIcons;
     public List<GameObject> sepatuModels;
 
-    private Dictionary<string, List<Sprite>> iconDatabase;
-    private Dictionary<string, List<GameObject>> modelDatabase;
-
-    private GameObject currentItem;
+    private Dictionary<string, (List<Sprite>, List<GameObject>, Transform)> itemDictionary;
     private string currentCategory = "";
 
     void Start()
     {
-        // Inisialisasi panel katalog tersembunyi
         panelKatalog.alpha = 0;
         panelKatalog.gameObject.SetActive(false);
+        panelKatalog.blocksRaycasts = false;
 
-        // Inisialisasi dictionary untuk mempermudah pengelolaan kategori
-        iconDatabase = new Dictionary<string, List<Sprite>>()
+        itemDictionary = new Dictionary<string, (List<Sprite>, List<GameObject>, Transform)>
         {
-            { "Rambut", rambutIcons },
-            { "Baju", bajuIcons },
-            { "Sepatu", sepatuIcons }
-        };
-
-        modelDatabase = new Dictionary<string, List<GameObject>>()
-        {
-            { "Rambut", rambutModels },
-            { "Baju", bajuModels },
-            { "Sepatu", sepatuModels }
+            { "Rambut", (rambutIcons, rambutModels, characterTransform.Find("SlotRambut")) },
+            { "Baju", (bajuIcons, bajuModels, characterTransform.Find("SlotBaju")) },
+            { "Sepatu", (sepatuIcons, sepatuModels, characterTransform.Find("SlotSepatu")) }
         };
     }
 
     public void ShowCatalog(string category)
     {
-        // Jika kategori yang diklik sama dengan yang sedang aktif, tutup katalog
-        if (currentCategory == category)
+        if (currentCategory == category && panelKatalog.gameObject.activeSelf)
         {
             StartCoroutine(FadeOut(panelKatalog));
             currentCategory = "";
             return;
         }
 
-        // Update kategori saat ini
+        if (!panelKatalog.gameObject.activeSelf)
+        {
+            StartCoroutine(FadeIn(panelKatalog));
+        }
+
         currentCategory = category;
         PopulateCatalog(category);
-        StartCoroutine(FadeIn(panelKatalog));
     }
 
     void PopulateCatalog(string category)
     {
-        // Bersihkan katalog sebelum menampilkan item baru
+        if (!itemDictionary.TryGetValue(category, out var data) || data.Item1.Count != data.Item2.Count)
+        {
+            return;
+        }
+
         foreach (Transform child in katalogContainer)
+        {
+            child.gameObject.SetActive(false);
+        }
+
+        for (int i = 0; i < data.Item1.Count; i++)
+        {
+            GameObject newItem = (i < katalogContainer.childCount) ?
+                katalogContainer.GetChild(i).gameObject :
+                Instantiate(itemPrefab, katalogContainer);
+
+            newItem.SetActive(true);
+
+            Image previewImage = newItem.transform.Find("PreviewModel")?.GetComponent<Image>();
+            if (previewImage)
+            {
+                previewImage.sprite = data.Item1[i];
+                AdjustImageSize(previewImage, data.Item1[i]);
+            }
+
+            Button itemButton = newItem.GetComponent<Button>();
+            if (itemButton)
+            {
+                int index = i;
+                itemButton.onClick.RemoveAllListeners();
+                itemButton.onClick.AddListener(() => SelectItem(data.Item2[index], category));
+            }
+        }
+    }
+
+    void SelectItem(GameObject modelPrefab, string category)
+    {
+        if (modelPrefab == null || !itemDictionary.TryGetValue(category, out var data))
+        {
+            return;
+        }
+
+        Transform targetSlot = data.Item3;
+        if (targetSlot == null) return;
+
+        foreach (Transform child in targetSlot)
         {
             Destroy(child.gameObject);
         }
 
-        // Pastikan kategori ada di database
-        if (!iconDatabase.ContainsKey(category) || !modelDatabase.ContainsKey(category))
-        {
-            Debug.LogError("Kategori tidak ditemukan: " + category);
-            return;
-        }
-
-        List<Sprite> icons = iconDatabase[category];
-        List<GameObject> models = modelDatabase[category];
-
-        if (icons.Count == 0 || models.Count == 0)
-        {
-            Debug.LogWarning("Kategori " + category + " belum memiliki item!");
-            return;
-        }
-
-        // Buat item di katalog
-        for (int i = 0; i < icons.Count; i++)
-        {
-            GameObject newItem = Instantiate(itemPrefab, katalogContainer);
-            Image previewImage = newItem.transform.Find("PreviewModel").GetComponent<Image>();
-
-            if (previewImage != null)
-            {
-                previewImage.sprite = icons[i];
-            }
-            else
-            {
-                Debug.LogError("PreviewModel tidak ditemukan dalam itemPrefab!");
-            }
-
-            int index = i; // Variabel lokal untuk menghindari closure issue
-            newItem.GetComponent<Button>().onClick.AddListener(() => SelectItem(models[index]));
-        }
-    }
-
-    void SelectItem(GameObject model)
-    {
-        if (model == null)
-        {
-            Debug.LogError("Model yang dipilih tidak ditemukan!");
-            return;
-        }
-
-        // Nonaktifkan item sebelumnya
-        if (currentItem != null)
-        {
-            currentItem.SetActive(false);
-        }
-
-        // Aktifkan model yang dipilih
-        model.SetActive(true);
-        currentItem = model;
+        GameObject newModel = Instantiate(modelPrefab, targetSlot);
+        newModel.name = modelPrefab.name + "_Instance";
+        newModel.SetActive(true);
     }
 
     IEnumerator FadeIn(CanvasGroup panel)
     {
         panel.gameObject.SetActive(true);
+        panel.blocksRaycasts = true;
         float t = 0;
         while (t < 1)
         {
@@ -146,6 +135,15 @@ public class DressUpManager : MonoBehaviour
             panel.alpha = Mathf.Lerp(0, 1, t);
             yield return null;
         }
+        panel.blocksRaycasts = false;
         panel.gameObject.SetActive(false);
+    }
+
+    void AdjustImageSize(Image image, Sprite sprite)
+    {
+        RectTransform rectTransform = image.GetComponent<RectTransform>();
+        float maxWidth = 100f, maxHeight = 100f;
+        float scaleFactor = Mathf.Min(maxWidth / sprite.rect.width, maxHeight / sprite.rect.height, 1f);
+        rectTransform.sizeDelta = new Vector2(sprite.rect.width * scaleFactor, sprite.rect.height * scaleFactor);
     }
 }
